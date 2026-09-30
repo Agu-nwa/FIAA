@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#9f001f" />
+    <meta
+      name="description"
+      content="Find FIAA brake parts by product number or vehicle, shop car accessories, and learn practical car care."
+    />
+    <title>FIAA Evolution — Parts, accessories and car knowledge</title>
+    <link rel="canonical" href="https://www.fiaaevolution.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="FIAA Evolution" />
+    <meta property="og:title" content="FIAA Evolution — Parts, accessories and car knowledge" />
+    <meta property="og:description" content="Find FIAA brake parts by product number or vehicle, browse car accessories, and learn practical car care." />
+    <meta property="og:url" content="https://www.fiaaevolution.com/" />
+    <meta property="og:image" content="https://www.fiaaevolution.com/assets/hero/fiaa-products.webp" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&family=Rubik:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <div class="utility-bar">
+        <div class="shell utility-inner">
+          <p>Brake parts • Car accessories</p>
+          <a href="tel:+2348163321810">Call 0816 332 1810</a>
+        </div>
+      </div>
+      <div class="shell header-main">
+        <a class="brand" href="#home" aria-label="FIAA Evolution home">
+          <img src="assets/fiaa-logo-pack.png" alt="FIAA Evolution" />
+        </a>
+        <nav class="desktop-nav" aria-label="Primary navigation">
+          <a href="#catalogue">Parts catalogue</a>
+          <a href="#accessories">Accessories</a>
+          <a href="#guides">Car guide</a>
+          <a href="#support">Support</a>
+        </nav>
+        <div class="header-actions">
+          <button class="icon-button" id="openSearch" aria-label="Open search" title="Search">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
+          </button>
+          <button class="cart-button" id="openCart" aria-label="Open cart">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 3h2l2.2 10.5a2 2 0 0 0 2 1.5h7.7a2 2 0 0 0 2-1.6L20 7H6"></path><circle cx="9" cy="20" r="1"></circle><circle cx="18" cy="20" r="1"></circle></svg>
+            <span>Cart</span><b id="cartCount">0</b>
+          </button>
+          <button class="menu-button" id="menuButton" aria-expanded="false" aria-controls="mobileMenu">
+            <span></span><span></span><span></span><span class="sr-only">Menu</span>
+          </button>
+        </div>
+      </div>
+      <nav class="mobile-menu" id="mobileMenu" aria-label="Mobile navigation" hidden>
+        <a href="#catalogue">Parts catalogue</a>
+        <a href="#accessories">Accessories</a>
+        <a href="#guides">Car guide</a>
+        <a href="#support">Support</a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="hero hero-carousel" id="home" aria-label="FIAA Evolution highlights" aria-roledescription="carousel" tabindex="0">
+        <div class="hero-track" id="heroTrack">
+          <article class="hero-slide is-active" data-slide="0" aria-hidden="false" aria-label="1 of 3: Everything your car needs">
+            <img class="hero-photo" src="assets/hero/fiaa-products.webp" alt="FIAA Evolution brake pads, shoe kits and product packs displayed in a workshop" fetchpriority="high" />
+            <div class="hero-shade"></div>
+            <div class="shell slide-content">
+              <div class="hero-copy">
+                <span class="eyebrow light">Parts made simple</span>
+                <h1>Everything your car needs, <em>in one place.</em></h1>
+                <p>Find the correct brake part by number or vehicle, with products built for confident stops on Nigerian roads.</p>
+                <div class="hero-actions">
+                  <a class="button button-primary" href="#catalogue">Find a brake part</a>
+                  <a class="button button-ghost" href="#accessories">Shop accessories</a>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="hero-slide" data-slide="1" aria-hidden="true" aria-label="2 of 3: Trusted by everyday transporters">
+            <img class="hero-photo hero-photo-person" src="assets/hero/everyday-transporter.webp" alt="An everyday Nigerian transporter standing beside his working vehicle" loading="lazy" />
+            <div class="hero-shade"></div>
+            <div class="shell slide-content">
+              <div class="hero-copy">
+                <span class="eyebrow light">People who keep moving</span>
+                <h2>Trusted by everyday transporters.</h2>
+                <p>Built for drivers, traders and businesses that depend on safe performance every single day.</p>
+                <div class="hero-actions">
+                  <a class="button button-primary" href="#catalogue">Find parts for my car</a>
+                  <a class="button button-ghost" href="#support">Talk to an expert</a>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="hero-slide" data-slide="2" aria-hidden="true" aria-label="3 of 3: Safety and quality">
+            <img class="hero-photo hero-photo-road" src="assets/hero/super-quality.webp" alt="FIAA Evolution brake product on a road journey with a pickup truck" loading="lazy" />
+            <div class="hero-shade"></div>
+            <div class="shell slide-content">
+              <div class="hero-copy">
+                <span class="eyebrow light">Safety first</span>
+                <h2>Quality you can trust on every journey.</h2>
+                <p>Reliable brake products, useful accessories and practical guidance for the road ahead.</p>
+                <div class="hero-actions">
+                  <a class="button button-primary" href="#catalogue">Browse the catalogue</a>
+                  <a class="button button-ghost" href="#guides">Explore Car Guide</a>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="shell hero-controls">
+          <div class="hero-pagination" role="tablist" aria-label="Choose a hero slide">
+            <button class="hero-dot is-active" role="tab" aria-selected="true" aria-label="Show slide 1" data-hero-dot="0"><span></span></button>
+            <button class="hero-dot" role="tab" aria-selected="false" aria-label="Show slide 2" data-hero-dot="1"><span></span></button>
+            <button class="hero-dot" role="tab" aria-selected="false" aria-label="Show slide 3" data-hero-dot="2"><span></span></button>
+          </div>
+          <div class="hero-navigation">
+            <button id="heroToggle" class="hero-control" aria-label="Pause automatic slides" aria-pressed="false">
+              <svg class="pause-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M9 6v12M15 6v12"></path></svg>
+              <svg class="play-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7z"></path></svg>
+            </button>
+            <button id="heroPrev" class="hero-control" aria-label="Previous slide"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></svg></button>
+            <button id="heroNext" class="hero-control" aria-label="Next slide"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"></path></svg></button>
+          </div>
+        </div>
+      </section>
+
+      <section class="finder-section" aria-labelledby="finderTitle">
+        <div class="shell finder-card">
+          <div class="finder-heading">
+            <span class="step-number">01</span>
+            <div><span class="eyebrow">Start here</span><h2 id="finderTitle">How do you want to find it?</h2></div>
+          </div>
+          <div class="finder-tabs" role="tablist" aria-label="Product finder method">
+            <button role="tab" aria-selected="true" data-finder-tab="number">I know the part number</button>
+            <button role="tab" aria-selected="false" data-finder-tab="vehicle">Search by my car</button>
+          </div>
+          <div class="finder-panel" id="numberPanel">
+            <label for="partSearch">Enter a product number</label>
+            <div class="search-control">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
+              <input id="partSearch" type="search" placeholder="Enter a FIAA number or vehicle" autocomplete="off" />
+              <button id="partSearchButton">Search catalogue</button>
+            </div>
+            <p class="field-help">Search with or without punctuation.</p>
+          </div>
+          <form class="finder-panel vehicle-finder" id="vehiclePanel" hidden>
+            <label><span>Make</span><input id="vehicleMake" autocomplete="off" placeholder="Vehicle make" /></label>
+            <label><span>Model</span><input id="vehicleModel" autocomplete="off" placeholder="Vehicle model" /></label>
+            <label><span>Year</span><input id="vehicleYear" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="e.g. 2018" /></label>
+            <label><span>Part position</span><select id="vehiclePosition"><option value="">Front or rear</option><option value="front">Front</option><option value="rear">Rear</option></select></label>
+            <button class="button button-primary" type="submit">Show matching parts</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="section catalogue-section" id="catalogue" aria-labelledby="catalogueTitle">
+        <div class="shell">
+          <div class="section-heading split-heading">
+            <div><span class="eyebrow">The familiar catalogue, online</span><h2 id="catalogueTitle">Find it by number. Confirm it by car.</h2></div>
+            <p>Every part keeps the product number traders know, with plain-language fitment details for every driver.</p>
+          </div>
+          <div class="catalogue-toolbar">
+            <div class="filter-chips" aria-label="Filter parts">
+              <button class="active" data-filter="all">All parts</button>
+              <button data-filter="Brake Pad">Brake pads</button>
+              <button data-filter="Brake Shoe">Brake shoes</button>
+              <button data-filter="Kit">Kits</button>
+            </div>
+            <button class="text-button" id="clearFilters" hidden>Clear search</button>
+          </div>
+          <div class="product-grid" id="partsGrid"></div>
+          <div class="empty-state" id="partsEmpty" hidden>
+            <div class="empty-icon">?</div><h3 id="partsEmptyTitle">No exact match found</h3><p id="partsEmptyText">Try a shorter product number, a different car name, or contact our team for help.</p><button class="button button-secondary" id="resetSearch">Show all parts</button>
+          </div>
+          <div class="section-action"><button class="button button-dark" id="showAllParts">View complete catalogue</button></div>
+        </div>
+      </section>
+
+      <section class="section category-section" id="accessories" aria-labelledby="accessoriesTitle">
+        <div class="shell">
+          <div class="section-heading split-heading">
+            <div><span class="eyebrow">Beyond brake parts</span><h2 id="accessoriesTitle">Useful things for every drive.</h2></div>
+            <p>Browse practical accessories for comfort, safety and car care, selected for everyday driving and vehicle upkeep.</p>
+          </div>
+          <div class="category-grid" id="categoryGrid"></div>
+          <div class="accessory-catalogue" aria-labelledby="accessoryCatalogueTitle">
+            <div class="accessory-catalogue-head">
+              <div><span class="eyebrow">Accessories catalogue</span><h3 id="accessoryCatalogueTitle">Shop by what your car needs.</h3></div>
+              <label class="accessory-search"><span class="sr-only">Search accessories</span><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="accessorySearch" type="search" placeholder="Search mats, chargers, tools…" /></label>
+            </div>
+            <div class="accessory-toolbar">
+              <div class="filter-chips accessory-filters" id="accessoryFilters" aria-label="Filter accessories"></div>
+              <span class="catalogue-count" id="accessoryCount" aria-live="polite"></span>
+            </div>
+            <div class="accessory-product-grid" id="accessoryGrid"></div>
+            <div class="empty-state" id="accessoryEmpty" hidden><div class="empty-icon">?</div><h3 id="accessoryEmptyTitle">No accessories found</h3><p id="accessoryEmptyText">Try another word or select a different category.</p><button class="button button-secondary" id="resetAccessories">Show all accessories</button></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section guide-section" id="guides" aria-labelledby="guidesTitle">
+        <div class="shell">
+          <div class="section-heading split-heading">
+            <div><span class="eyebrow">Know your car</span><h2 id="guidesTitle">Clear advice, minus the mechanic talk.</h2></div>
+            <a class="text-link" href="#guides">Browse the car guide <span>→</span></a>
+          </div>
+          <div class="guide-grid" id="guideGrid"></div>
+        </div>
+      </section>
+
+      <section class="support-section" id="support">
+        <div class="shell support-grid">
+          <div><span class="eyebrow light">Still not sure?</span><h2>Send us the number—or a photo.</h2><p>Our team can help identify the right part before you pay.</p></div>
+          <div class="support-actions">
+            <a class="button whatsapp-button" href="https://wa.me/2348163321810" target="_blank" rel="noreferrer">Chat on WhatsApp</a>
+            <a class="button button-outline-light" href="tel:+2348163321810">Call 0816 332 1810</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="shell footer-grid">
+        <div><a class="brand footer-brand" href="#home"><img src="assets/fiaa-logo-pack.png" alt="FIAA Evolution" /></a><p>Parts, accessories and practical car knowledge—made simple.</p></div>
+        <div><h2>Shop</h2><a href="#catalogue">Parts catalogue</a><a href="#accessories">Accessories</a><a href="#catalogue">Find by vehicle</a></div>
+        <div><h2>Help</h2><a href="#guides">Car guide</a><a href="/pages/contact">Contact us</a><a href="/pages/delivery">Delivery</a><a href="/pages/returns-refunds">Returns & refunds</a></div>
+        <div><h2>Visit us</h2><p>Shop AW4/12B, New Motor Spare Parts Market, Nkwo Nnewi, Anambra State.</p><p>Mon–Sat, 8:00am–6:00pm</p></div>
+      </div>
+      <div class="shell footer-bottom"><span>© 2026 FIAA Evolution.</span><span>Built for Nigerian roads.</span></div>
+    </footer>
+
+    <nav class="bottom-nav" aria-label="Quick navigation">
+      <a href="#home" class="active"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8v9H3z"></path><path d="M9 20v-6h6v6"></path></svg><span>Home</span></a>
+      <a href="#catalogue"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M8 8h8M8 12h8M8 16h5"></path></svg><span>Catalogue</span></a>
+      <button id="bottomSearch"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><span>Search</span></button>
+      <a href="#accessories"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 8h16l-1 12H5z"></path><path d="M8 8a4 4 0 0 1 8 0"></path></svg><span>Accessories</span></a>
+      <button id="bottomCart"><span class="mobile-cart-count" id="mobileCartCount">0</span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 3h2l2.2 10.5a2 2 0 0 0 2 1.5h7.7a2 2 0 0 0 2-1.6L20 7H6"></path><circle cx="9" cy="20" r="1"></circle><circle cx="18" cy="20" r="1"></circle></svg><span>Cart</span></button>
+    </nav>
+
+    <dialog class="drawer" id="productDialog" aria-labelledby="dialogTitle">
+      <div class="drawer-header"><span>Product details</span><button class="icon-button close-dialog" aria-label="Close product details">×</button></div>
+      <div id="productDialogContent"></div>
+    </dialog>
+
+    <dialog class="drawer cart-drawer" id="cartDialog" aria-labelledby="cartTitle">
+      <div class="drawer-header"><h2 id="cartTitle">Your cart</h2><button class="icon-button close-dialog" aria-label="Close cart">×</button></div>
+      <div id="cartItems"></div>
+      <div class="cart-summary" id="cartSummary"></div>
+    </dialog>
+
+    <dialog class="drawer checkout-drawer" id="checkoutDialog" aria-labelledby="checkoutTitle">
+      <div class="drawer-header"><h2 id="checkoutTitle">Checkout</h2><button class="icon-button close-dialog" aria-label="Close checkout">×</button></div>
+      <div id="checkoutContent">
+        <form id="checkoutForm" class="checkout-form">
+          <div class="checkout-intro"><span class="eyebrow">Secure order</span><h3>Where should we send your order?</h3><p>Delivery choices and charges below come directly from FIAA.</p></div>
+          <label><span>Full name</span><input name="fullName" autocomplete="name" minlength="2" maxlength="150" required /></label>
+          <label><span>Phone number</span><input name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="+234…" pattern="\+[1-9][0-9]{7,14}" required /></label>
+          <label><span>Email <small>(optional)</small></span><input name="email" type="email" autocomplete="email" /></label>
+          <label><span>Delivery method</span><select name="deliveryMethod" id="deliveryMethod" required><option value="">Loading available methods…</option></select></label>
+          <div id="deliveryAddress" class="checkout-address" hidden>
+            <label><span>Street address</span><input name="line1" autocomplete="street-address" maxlength="200" /></label>
+            <label><span>Additional address <small>(optional)</small></span><input name="line2" maxlength="200" /></label>
+            <div class="checkout-row"><label><span>City</span><input name="city" autocomplete="address-level2" maxlength="100" /></label><label><span>State</span><input name="state" autocomplete="address-level1" maxlength="100" /></label></div>
+            <label><span>Delivery note <small>(optional)</small></span><textarea name="addressNotes" maxlength="500"></textarea></label>
+          </div>
+          <label><span>Order note <small>(optional)</small></span><textarea name="customerNote" maxlength="1000"></textarea></label>
+          <div class="checkout-total"><span>Order subtotal</span><strong id="checkoutSubtotal">—</strong></div>
+          <p class="form-error" id="checkoutError" role="alert" hidden></p>
+          <button class="button button-primary checkout-submit" type="submit">Place order</button>
+        </form>
+        <div class="order-confirmation" id="orderConfirmation" hidden></div>
+      </div>
+    </dialog>
+
+    <div class="search-overlay" id="searchOverlay" hidden>
+      <div class="overlay-card">
+        <button class="icon-button" id="closeSearch" aria-label="Close search">×</button>
+        <span class="eyebrow">Search FIAA Evolution</span>
+        <h2>What are you looking for?</h2>
+        <div class="search-control"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><label class="sr-only" for="globalSearch">Part number, vehicle or accessory</label><input id="globalSearch" type="search" placeholder="Part number, car or accessory" /><button id="globalSearchButton">Search</button></div>
+        <p>Popular: <button data-query="Camry">Camry</button> <button data-query="Highlander">Highlander</button> <button data-query="D2222">D2222</button></p>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
+</html>

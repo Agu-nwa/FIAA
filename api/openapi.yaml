@@ -1,0 +1,983 @@
+openapi: 3.1.0
+info:
+  title: FIAA Evolution Commerce API
+  version: 1.0.0
+  description: Production contract for the FIAA storefront and staff administration. Public catalogue responses contain approved published records only.
+servers:
+  - url: https://api.fiaaevolution.com
+    description: Production
+  - url: http://localhost:3000
+    description: Local development
+tags:
+  - name: Catalogue
+  - name: Cart
+  - name: Checkout
+  - name: Orders
+  - name: Content
+  - name: Webhooks
+  - name: Administration
+paths:
+  /v1/search:
+    get:
+      tags: [Catalogue]
+      operationId: searchStorefront
+      summary: Search approved storefront products
+      parameters:
+        - $ref: '#/components/parameters/SearchQuery'
+        - $ref: '#/components/parameters/MakeFilter'
+        - $ref: '#/components/parameters/ModelFilter'
+        - $ref: '#/components/parameters/YearFilter'
+        - $ref: '#/components/parameters/PositionFilter'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Ranked published products
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, count, limit, offset]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/ProductSummary' }
+                  count: { type: integer, minimum: 0 }
+                  limit: { type: integer, minimum: 1, maximum: 100 }
+                  offset: { type: integer, minimum: 0 }
+        default: { $ref: '#/components/responses/Problem' }
+  /v1/products/{slug}:
+    get:
+      tags: [Catalogue]
+      operationId: getProduct
+      summary: Get one approved published product
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+      responses:
+        '200':
+          description: Product details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProductDetail' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        default: { $ref: '#/components/responses/Problem' }
+  /v1/carts:
+    post:
+      tags: [Cart]
+      operationId: createCart
+      summary: Create an anonymous server-side cart
+      responses:
+        '201':
+          description: Cart and opaque browser token
+          headers:
+            Set-Cookie:
+              schema: { type: string }
+              description: HttpOnly, Secure, SameSite=Lax cart token cookie
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Cart' }
+        default: { $ref: '#/components/responses/Problem' }
+  /v1/carts/{cartId}:
+    get:
+      tags: [Cart]
+      operationId: getCart
+      summary: Get the authenticated anonymous cart
+      security: [{ cartCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CartId'
+      responses:
+        '200':
+          description: Current cart calculated from approved server prices
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Cart' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        default: { $ref: '#/components/responses/Problem' }
+  /v1/carts/{cartId}/items/{sku}:
+    put:
+      tags: [Cart]
+      operationId: setCartItem
+      summary: Add, update or remove a cart line
+      description: Quantity zero removes the line. Price and availability are always recalculated by the server.
+      security: [{ cartCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CartId'
+        - name: sku
+          in: path
+          required: true
+          schema: { type: string, minLength: 1, maxLength: 100 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [quantity]
+              properties:
+                quantity: { type: integer, minimum: 0, maximum: 100 }
+      responses:
+        '200':
+          description: Updated cart
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Cart' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        default: { $ref: '#/components/responses/Problem' }
+  /v1/checkout:
+    post:
+      tags: [Checkout]
+      operationId: createCheckout
+      summary: Create an idempotent pending-payment order
+      security: [{ cartCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CheckoutRequest' }
+      responses:
+        '201':
+          description: Order created and inventory reserved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CheckoutResponse' }
+        '200':
+          description: Existing order returned for a repeated idempotent request
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CheckoutResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationProblem' }
+        default: { $ref: '#/components/responses/Problem' }
+  /v1/delivery-methods:
+    get:
+      tags: [Checkout]
+      operationId: listDeliveryMethods
+      summary: List active owner-approved delivery methods and fees
+      responses:
+        '200':
+          description: Active delivery choices
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/DeliveryMethod' }
+        default: { $ref: '#/components/responses/Problem' }
+  /v1/orders/{orderNumber}:
+    get:
+      tags: [Orders]
+      operationId: getOrder
+      summary: Get an order using its private HttpOnly session or customer access token
+      security: [{ orderCookie: [] }, { orderBearer: [] }]
+      parameters:
+        - name: orderNumber
+          in: path
+          required: true
+          schema: { type: string, pattern: '^FIAA-[0-9]{8}-[0-9]{6}$' }
+      responses:
+        '200':
+          description: Customer-safe order details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        default: { $ref: '#/components/responses/Problem' }
+  /v1/content/{slug}:
+    get:
+      tags: [Content]
+      operationId: getContentPage
+      summary: Get an owner-approved public content page
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+      responses:
+        '200':
+          description: Published page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ContentPage' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        default: { $ref: '#/components/responses/Problem' }
+  /v1/webhooks/payments/{provider}:
+    post:
+      tags: [Webhooks]
+      operationId: receivePaymentWebhook
+      summary: Receive a payment-provider webhook
+      description: The implementation must verify the raw-body provider signature before changing payment or order state.
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema: { type: string, minLength: 2, maxLength: 50 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        '200': { description: Verified event processed or already processed }
+        '400': { $ref: '#/components/responses/ValidationProblem' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        default: { $ref: '#/components/responses/Problem' }
+  /v1/admin/products:
+    get:
+      tags: [Administration]
+      operationId: listAdminProducts
+      summary: List governed catalogue products and publication problems
+      security: [{ adminBearer: [] }]
+      parameters:
+        - { name: q, in: query, schema: { type: string, maxLength: 120 } }
+        - { name: status, in: query, schema: { type: string, enum: [draft, review, approved, published, archived] } }
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Paginated catalogue administration records
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, total, limit, offset]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/AdminProductListItem' }
+                  total: { type: integer, minimum: 0 }
+                  limit: { type: integer }
+                  offset: { type: integer }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        default: { $ref: '#/components/responses/Problem' }
+  /v1/admin/products/{productId}:
+    get:
+      tags: [Administration]
+      operationId: getAdminProduct
+      summary: Retrieve the complete governed catalogue record for staff review
+      security: [{ adminBearer: [] }]
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+      responses:
+        '200':
+          description: Staff-only product record with governance evidence
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminProductDetail' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        default: { $ref: '#/components/responses/Problem' }
+  /v1/admin/orders:
+    get:
+      tags: [Administration]
+      operationId: listAdminOrders
+      summary: List customer orders for authorized order staff
+      security: [{ adminBearer: [] }]
+      parameters:
+        - { name: q, in: query, schema: { type: string, maxLength: 120 } }
+        - { name: status, in: query, schema: { type: string, enum: [pending_payment, paid, processing, ready_for_pickup, shipped, delivered, cancelled, refunded] } }
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Paginated order administration records
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, total, limit, offset]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/AdminOrderListItem' }
+                  total: { type: integer, minimum: 0 }
+                  limit: { type: integer }
+                  offset: { type: integer }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        default: { $ref: '#/components/responses/Problem' }
+  /v1/admin/orders/{orderId}/status:
+    post:
+      tags: [Administration]
+      operationId: transitionOrderStatus
+      summary: Move an order through the audited fulfilment workflow
+      description: Payment and refund states remain provider-controlled; shipment dispatch requires tracking.
+      security: [{ adminBearer: [] }]
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [status, reason]
+              properties:
+                status: { type: string, enum: [pending_payment, paid, processing, ready_for_pickup, shipped, delivered, cancelled, refunded] }
+                reason: { type: string, minLength: 5, maxLength: 1000 }
+      responses:
+        '200':
+          description: Updated order workflow state
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminOrderStatus' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationProblem' }
+        default: { $ref: '#/components/responses/Problem' }
+  /v1/admin/orders/{orderId}/shipment:
+    put:
+      tags: [Administration]
+      operationId: upsertAdminShipment
+      summary: Create or advance an audited tracked shipment
+      security: [{ adminBearer: [] }]
+      parameters:
+        - { name: orderId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [carrier, trackingNumber, status, reason]
+              properties:
+                carrier: { type: string, minLength: 2, maxLength: 120 }
+                trackingNumber: { type: string, minLength: 3, maxLength: 200 }
+                status: { type: string, enum: [ready, collected, in_transit, delivered, returned, cancelled] }
+                reason: { type: string, minLength: 5, maxLength: 1000 }
+      responses:
+        '200':
+          description: Current tracked shipment
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminShipment' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationProblem' }
+        default: { $ref: '#/components/responses/Problem' }
+  /v1/admin/orders/{orderId}:
+    get:
+      tags: [Administration]
+      operationId: getAdminOrder
+      summary: Retrieve a private order record for authorized staff
+      security: [{ adminBearer: [] }]
+      parameters:
+        - { name: orderId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Private order detail including customer, fulfilment and payment records
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminOrderDetail' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        default: { $ref: '#/components/responses/Problem' }
+  /v1/admin/content:
+    get:
+      tags: [Administration]
+      operationId: listAdminContent
+      summary: List governed content and publication problems
+      security: [{ adminBearer: [] }]
+      parameters:
+        - { name: q, in: query, schema: { type: string, maxLength: 120 } }
+        - { name: status, in: query, schema: { type: string, enum: [draft, review, published, archived] } }
+        - { name: pageType, in: query, schema: { type: string, enum: [guide, policy, support, company] } }
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Paginated governed content records
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, total, limit, offset]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/AdminContentListItem' } }
+                  total: { type: integer, minimum: 0 }
+                  limit: { type: integer }
+                  offset: { type: integer }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        default: { $ref: '#/components/responses/Problem' }
+  /v1/admin/products/{productId}/status:
+    post:
+      tags: [Administration]
+      operationId: transitionProductStatus
+      summary: Transition a product through the governed publication workflow
+      security: [{ adminBearer: [] }]
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [status, reason]
+              properties:
+                status:
+                  type: string
+                  enum: [draft, review, approved, published, archived]
+                reason: { type: string, minLength: 5, maxLength: 1000 }
+      responses:
+        '200':
+          description: Updated product workflow state
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminProductStatus' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        default: { $ref: '#/components/responses/Problem' }
+  /v1/admin/products/{productId}/publication-problems:
+    get:
+      tags: [Administration]
+      operationId: getProductPublicationProblems
+      summary: List every missing product publication requirement
+      security: [{ adminBearer: [] }]
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+      responses:
+        '200':
+          description: Publication problems; an empty list means ready
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [problems, ready]
+                properties:
+                  problems:
+                    type: array
+                    items: { type: string }
+                  ready: { type: boolean }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        default: { $ref: '#/components/responses/Problem' }
+  /v1/admin/content/{pageId}/publish:
+    post:
+      tags: [Administration]
+      operationId: publishContentPage
+      summary: Owner-approve and publish a content version
+      security: [{ adminBearer: [] }]
+      parameters:
+        - name: pageId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [reason]
+              properties:
+                reason: { type: string, minLength: 5, maxLength: 1000 }
+      responses:
+        '200':
+          description: Published content page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ContentPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        default: { $ref: '#/components/responses/Problem' }
+  /v1/admin/content/drafts:
+    post:
+      tags: [Administration]
+      operationId: saveContentDraft
+      summary: Create or revise a governed content draft
+      security: [{ adminBearer: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [slug, title, pageType, bodyHtml, metaTitle, metaDescription, changeSummary]
+              properties:
+                pageId: { type: [string, 'null'], format: uuid }
+                slug: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+                title: { type: string, minLength: 2, maxLength: 200 }
+                pageType: { type: string, enum: [guide, policy, support, company] }
+                excerpt: { type: [string, 'null'], maxLength: 500 }
+                bodyHtml: { type: string, minLength: 120, maxLength: 100000 }
+                metaTitle: { type: string, minLength: 1, maxLength: 60 }
+                metaDescription: { type: string, minLength: 1, maxLength: 160 }
+                changeSummary: { type: string, minLength: 5, maxLength: 1000 }
+      responses:
+        '201': { description: Draft created }
+        '200': { description: Draft revised }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationProblem' }
+        default: { $ref: '#/components/responses/Problem' }
+  /v1/admin/launch-readiness:
+    get:
+      tags: [Administration]
+      operationId: getLaunchReadiness
+      summary: Inspect governed content, catalogue and notification readiness
+      security: [{ adminBearer: [] }]
+      responses:
+        '200': { description: Current launch-readiness evidence }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        default: { $ref: '#/components/responses/Problem' }
+components:
+  securitySchemes:
+    cartCookie:
+      type: apiKey
+      in: cookie
+      name: fiaa_cart
+    orderBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque-order-token
+    orderCookie:
+      type: apiKey
+      in: cookie
+      name: fiaa_order
+    adminBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    SearchQuery:
+      name: q
+      in: query
+      schema: { type: string, maxLength: 120 }
+    MakeFilter:
+      name: make
+      in: query
+      schema: { type: string, maxLength: 80 }
+    ModelFilter:
+      name: model
+      in: query
+      schema: { type: string, maxLength: 100 }
+    YearFilter:
+      name: year
+      in: query
+      schema: { type: integer, minimum: 1900, maximum: 2200 }
+    PositionFilter:
+      name: position
+      in: query
+      schema: { type: string, enum: [front, rear, front_or_rear] }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 24 }
+    Offset:
+      name: offset
+      in: query
+      schema: { type: integer, minimum: 0, default: 0 }
+    CartId:
+      name: cartId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    ProductId:
+      name: productId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, minLength: 24, maxLength: 200 }
+  responses:
+    Problem:
+      description: Error response
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    ValidationProblem:
+      description: Request validation failed
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Unauthorized:
+      description: Authentication failed
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Forbidden:
+      description: Authenticated user lacks permission
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: Resource not found
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Conflict:
+      description: Availability, state or idempotency conflict
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+  schemas:
+    Money:
+      type: object
+      additionalProperties: false
+      required: [currency, amountMinor]
+      properties:
+        currency: { type: string, pattern: '^[A-Z]{3}$' }
+        amountMinor: { type: integer, minimum: 0 }
+    ProductImage:
+      type: object
+      additionalProperties: false
+      required: [url, alt, role, width, height]
+      properties:
+        url: { type: string, format: uri }
+        alt: { type: string, minLength: 1 }
+        role: { type: string, enum: [primary, gallery, packaging, dimension_diagram] }
+        width: { type: integer, minimum: 1 }
+        height: { type: integer, minimum: 1 }
+    Fitment:
+      type: object
+      additionalProperties: false
+      required: [make, model, position]
+      properties:
+        make: { type: string }
+        model: { type: string }
+        yearFrom: { type: [integer, 'null'], minimum: 1900, maximum: 2200 }
+        yearTo: { type: [integer, 'null'], minimum: 1900, maximum: 2200 }
+        engine: { type: [string, 'null'] }
+        trim: { type: [string, 'null'] }
+        bodyStyle: { type: [string, 'null'] }
+        position: { type: string, enum: [front, rear, front_or_rear] }
+        notes: { type: [string, 'null'] }
+    ProductSummary:
+      type: object
+      additionalProperties: false
+      required: [id, sku, slug, name, productKind, category, price, availableQuantity]
+      properties:
+        id: { type: string, format: uuid }
+        sku: { type: string }
+        slug: { type: string }
+        name: { type: string }
+        productKind: { type: string, enum: [brake_pad, brake_shoe, fitting_kit, accessory] }
+        category: { type: string }
+        shortDescription: { type: string }
+        axlePosition: { type: [string, 'null'], enum: [front, rear, front_or_rear, not_applicable, null] }
+        price: { $ref: '#/components/schemas/Money' }
+        availableQuantity: { type: integer, minimum: 0 }
+        primaryImage:
+          oneOf:
+            - $ref: '#/components/schemas/ProductImage'
+            - type: 'null'
+    ProductDetail:
+      allOf:
+        - $ref: '#/components/schemas/ProductSummary'
+        - type: object
+          required: [description, images, oemReferences, fitments]
+          properties:
+            description: { type: string }
+            widthMm: { type: [number, 'null'], exclusiveMinimum: 0 }
+            heightMm: { type: [number, 'null'], exclusiveMinimum: 0 }
+            thicknessMm: { type: [number, 'null'], exclusiveMinimum: 0 }
+            warrantyText: { type: [string, 'null'] }
+            images:
+              type: array
+              minItems: 1
+              items: { $ref: '#/components/schemas/ProductImage' }
+            oemReferences:
+              type: array
+              items: { type: string }
+            fitments:
+              type: array
+              items: { $ref: '#/components/schemas/Fitment' }
+    CartItem:
+      type: object
+      additionalProperties: false
+      required: [sku, slug, name, quantity, availableQuantity, unitPrice, lineTotal]
+      properties:
+        sku: { type: string }
+        slug: { type: string }
+        name: { type: string }
+        quantity: { type: integer, minimum: 1, maximum: 100 }
+        availableQuantity: { type: integer, minimum: 0 }
+        unitPrice: { $ref: '#/components/schemas/Money' }
+        lineTotal: { $ref: '#/components/schemas/Money' }
+    Cart:
+      type: object
+      additionalProperties: false
+      required: [id, status, expiresAt, currency, itemCount, subtotal, items]
+      properties:
+        id: { type: string, format: uuid }
+        status: { type: string, enum: [active, converted, abandoned, expired] }
+        expiresAt: { type: string, format: date-time }
+        currency: { type: string, pattern: '^[A-Z]{3}$' }
+        itemCount: { type: integer, minimum: 0 }
+        subtotal: { $ref: '#/components/schemas/Money' }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/CartItem' }
+    Address:
+      type: object
+      additionalProperties: false
+      required: [line1, city, state]
+      properties:
+        line1: { type: string, minLength: 3, maxLength: 200 }
+        line2: { type: [string, 'null'], maxLength: 200 }
+        city: { type: string, minLength: 2, maxLength: 100 }
+        state: { type: string, minLength: 2, maxLength: 100 }
+        notes: { type: [string, 'null'], maxLength: 500 }
+    DeliveryMethod:
+      type: object
+      additionalProperties: false
+      required: [code, name, fee, requiresAddress]
+      properties:
+        code: { type: string }
+        name: { type: string }
+        description: { type: [string, 'null'] }
+        fee: { $ref: '#/components/schemas/Money' }
+        requiresAddress: { type: boolean }
+    CheckoutRequest:
+      type: object
+      additionalProperties: false
+      required: [cartId, customer, deliveryMethod]
+      properties:
+        cartId: { type: string, format: uuid }
+        customer:
+          type: object
+          additionalProperties: false
+          required: [fullName, phone]
+          properties:
+            fullName: { type: string, minLength: 2, maxLength: 150 }
+            phone: { type: string, pattern: '^\+[1-9][0-9]{7,14}$' }
+            email: { type: [string, 'null'], format: email }
+        deliveryMethod: { type: string, minLength: 2, maxLength: 80 }
+        address:
+          oneOf:
+            - $ref: '#/components/schemas/Address'
+            - type: 'null'
+        customerNote: { type: [string, 'null'], maxLength: 1000 }
+    CheckoutResponse:
+      type: object
+      additionalProperties: false
+      required: [order, orderAccess, payment]
+      properties:
+        order: { $ref: '#/components/schemas/Order' }
+        orderAccess:
+          type: object
+          additionalProperties: false
+          required: [mode]
+          properties:
+            mode: { type: string, enum: [httpOnlyCookie] }
+          description: The private order token is delivered only as a path-scoped HttpOnly cookie.
+        payment:
+          type: object
+          additionalProperties: false
+          required: [status]
+          properties:
+            status: { type: string, enum: [not_required, requires_action, pending] }
+            authorizationUrl: { type: [string, 'null'], format: uri }
+    Order:
+      type: object
+      additionalProperties: false
+      required: [orderNumber, status, currency, subtotal, delivery, discount, total, items, placedAt]
+      properties:
+        orderNumber: { type: string }
+        status: { type: string, enum: [pending_payment, paid, processing, ready_for_pickup, shipped, delivered, cancelled, refunded] }
+        currency: { type: string, pattern: '^[A-Z]{3}$' }
+        subtotal: { $ref: '#/components/schemas/Money' }
+        delivery: { $ref: '#/components/schemas/Money' }
+        discount: { $ref: '#/components/schemas/Money' }
+        total: { $ref: '#/components/schemas/Money' }
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [sku, name, quantity, unitPrice, lineTotal]
+            properties:
+              sku: { type: string }
+              name: { type: string }
+              quantity: { type: integer, minimum: 1 }
+              unitPrice: { $ref: '#/components/schemas/Money' }
+              lineTotal: { $ref: '#/components/schemas/Money' }
+        placedAt: { type: string, format: date-time }
+    ContentPage:
+      type: object
+      additionalProperties: false
+      required: [slug, title, pageType, bodyHtml, metaTitle, metaDescription, version, publishedAt]
+      properties:
+        slug: { type: string }
+        title: { type: string }
+        pageType: { type: string, enum: [guide, policy, support, company] }
+        excerpt: { type: [string, 'null'] }
+        bodyHtml: { type: string }
+        metaTitle: { type: string, maxLength: 60 }
+        metaDescription: { type: string, maxLength: 160 }
+        version: { type: integer, minimum: 1 }
+        publishedAt: { type: string, format: date-time }
+    AdminProductStatus:
+      type: object
+      required: [id, sku, status, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        sku: { type: string }
+        status: { type: string, enum: [draft, review, approved, published, archived] }
+        updatedAt: { type: string, format: date-time }
+    AdminProductListItem:
+      type: object
+      required: [id, sku, slug, name, productKind, status, problems, ready, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        sku: { type: string }
+        slug: { type: string }
+        name: { type: string }
+        productKind: { type: string }
+        status: { type: string, enum: [draft, review, approved, published, archived] }
+        ownerVerifiedAt: { type: [string, 'null'], format: date-time }
+        updatedAt: { type: string, format: date-time }
+        problems: { type: array, items: { type: string } }
+        ready: { type: boolean }
+    AdminProductDetail:
+      type: object
+      required: [id, sku, slug, name, productKind, category, status, dimensionsMm, problems, ready, prices, images, oemReferences, fitments, inventory, history, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        sku: { type: string }
+        slug: { type: string }
+        name: { type: string }
+        productKind: { type: string }
+        category: { type: string }
+        status: { type: string, enum: [draft, review, approved, published, archived] }
+        shortDescription: { type: [string, 'null'] }
+        description: { type: [string, 'null'] }
+        axlePosition: { type: [string, 'null'] }
+        dimensionsMm: { type: object, additionalProperties: true }
+        warrantyText: { type: [string, 'null'] }
+        ownerVerifiedAt: { type: [string, 'null'], format: date-time }
+        ownerVerifiedBy: { type: [string, 'null'] }
+        publishedAt: { type: [string, 'null'], format: date-time }
+        updatedAt: { type: string, format: date-time }
+        problems: { type: array, items: { type: string } }
+        ready: { type: boolean }
+        prices: { type: array, items: { type: object, additionalProperties: true } }
+        images: { type: array, items: { type: object, additionalProperties: true } }
+        oemReferences: { type: array, items: { type: object, additionalProperties: true } }
+        fitments: { type: array, items: { type: object, additionalProperties: true } }
+        inventory: { type: array, items: { type: object, additionalProperties: true } }
+        history: { type: array, items: { type: object, additionalProperties: true } }
+    AdminOrderListItem:
+      type: object
+      required: [id, orderNumber, status, total, placedAt, updatedAt, customer]
+      properties:
+        id: { type: string, format: uuid }
+        orderNumber: { type: string }
+        status: { type: string, enum: [pending_payment, paid, processing, ready_for_pickup, shipped, delivered, cancelled, refunded] }
+        total: { $ref: '#/components/schemas/Money' }
+        placedAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        customer:
+          type: object
+          required: [name, phone]
+          properties:
+            name: { type: string }
+            phone: { type: string }
+    AdminOrderStatus:
+      type: object
+      required: [id, orderNumber, status, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        orderNumber: { type: string }
+        status: { type: string, enum: [pending_payment, paid, processing, ready_for_pickup, shipped, delivered, cancelled, refunded] }
+        updatedAt: { type: string, format: date-time }
+    AdminShipment:
+      type: object
+      required: [id, orderId, carrier, trackingNumber, status, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        orderId: { type: string, format: uuid }
+        carrier: { type: string }
+        trackingNumber: { type: string }
+        status: { type: string, enum: [ready, collected, in_transit, delivered, returned, cancelled] }
+        shippedAt: { type: [string, 'null'], format: date-time }
+        deliveredAt: { type: [string, 'null'], format: date-time }
+        updatedAt: { type: string, format: date-time }
+    AdminOrderDetail:
+      type: object
+      required: [id, orderNumber, status, customer, delivery, items, subtotal, deliveryFee, discount, total, payments, shipments, placedAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        orderNumber: { type: string }
+        status: { type: string }
+        customer: { type: object, additionalProperties: true }
+        delivery: { type: object, additionalProperties: true }
+        items: { type: array, items: { type: object, additionalProperties: true } }
+        subtotal: { $ref: '#/components/schemas/Money' }
+        deliveryFee: { $ref: '#/components/schemas/Money' }
+        discount: { $ref: '#/components/schemas/Money' }
+        total: { $ref: '#/components/schemas/Money' }
+        payments: { type: array, items: { type: object, additionalProperties: true } }
+        shipments: { type: array, items: { type: object, additionalProperties: true } }
+        customerNote: { type: [string, 'null'] }
+        internalNote: { type: [string, 'null'] }
+        placedAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    AdminContentListItem:
+      type: object
+      required: [id, slug, title, pageType, status, version, problems, ready, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string }
+        title: { type: string }
+        pageType: { type: string, enum: [guide, policy, support, company] }
+        status: { type: string, enum: [draft, review, published, archived] }
+        version: { type: integer, minimum: 1 }
+        ownerVerifiedAt: { type: [string, 'null'], format: date-time }
+        publishedAt: { type: [string, 'null'], format: date-time }
+        updatedAt: { type: string, format: date-time }
+        problems: { type: array, items: { type: string } }
+        ready: { type: boolean }
+    Problem:
+      type: object
+      additionalProperties: true
+      required: [type, title, status]
+      properties:
+        type: { type: string, format: uri-reference }
+        title: { type: string }
+        status: { type: integer, minimum: 400, maximum: 599 }
+        detail: { type: string }
+        instance: { type: string, format: uri-reference }
+        code: { type: string }
+        errors:
+          type: array
+          items:
+            type: object
+            required: [field, message]
+            properties:
+              field: { type: string }
+              message: { type: string }

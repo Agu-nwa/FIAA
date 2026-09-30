@@ -1,0 +1,13 @@
+.git
+.env*
+!.env.example
+node_modules
+npm-debug.log*
+test
+database
+data
+api
+brand
+scripts
+README.md
+.DS_Store
